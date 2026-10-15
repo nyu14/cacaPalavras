@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f1e5">
+  <meta name="description" content="Encontre os elos escondidos entre palavras no desafio diário.">
+  <title>Palavras em comum</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="game.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#game-title">Pular para o jogo</a>
+  <div class="app-shell">
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Palavras em comum, início">
+        <span class="brand-mark" aria-hidden="true">∴</span>
+        <span>PALAVRAS EM COMUM<small>Um painel por dia</small></span>
+      </a>
+      <nav class="main-nav" aria-label="Modos de jogo">
+        <button class="nav-button is-active" id="daily-tab" type="button" aria-current="page">Hoje</button>
+        <button class="nav-button" id="practice-tab" type="button">Prática</button>
+        <button class="nav-button" id="archive-button" type="button">Arquivo</button>
+      </nav>
+      <div class="header-actions">
+            <button class="icon-button" id="contrast-toggle" type="button" aria-pressed="false" aria-label="Ativar alto contraste">◐ <span>Contraste</span></button>
+        <button class="icon-button" id="stats-button" type="button">Estatísticas</button>
+      </div>
+    </header>
+
+    <main id="main-content">
+      <section class="page-heading" aria-labelledby="game-title">
+        <div>
+          <p class="eyebrow" id="today-label">DESAFIO DIÁRIO</p>
+          <h1 id="game-title">O que têm em comum?</h1>
+        </div>
+        <div class="panel-number"><span>Painel</span><strong id="panel-number">284</strong></div>
+      </section>
+
+      <details class="rules">
+        <summary>Como jogar</summary>
+        <p>Encontre quatro grupos de quatro termos. Cada combinação incorreta conta como um erro. Você tem cinco erros; não há cronômetro.</p>
+      </details>
+
+      <div class="game-layout">
+        <section class="play-area" aria-label="Partida">
+          <div class="game-status-bar">
+            <p id="selection-count" aria-live="polite">0 de 4 termos selecionados</p>
+            <div class="mistake-counter">
+              <span>Erros</span>
+              <strong id="error-count">0 / 5</strong>
+              <span id="error-shapes" class="error-shapes" aria-hidden="true"></span>
+            </div>
+          </div>
+
+          <div id="solved-groups" class="solved-groups" aria-label="Grupos encontrados"></div>
+          <div id="word-board" class="word-board" role="group" aria-label="Termos do painel"></div>
+
+          <div class="selection-actions">
+            <button class="text-button" id="clear-selection" type="button">Limpar seleção</button>
+            <span id="selection-help">Escolha até quatro termos</span>
+          </div>
+          <div class="primary-actions">
+            <button class="button-primary" id="submit-group" type="button" disabled>Enviar grupo</button>
+            <button class="button-secondary" id="hint-button" type="button" disabled>Usar dica</button>
+          </div>
+          <p class="hint-guidance" id="hint-guidance">Dicas ficam disponíveis após dois erros seguidos.</p>
+          <p class="announcement" id="game-announcement" role="status" aria-live="polite" aria-atomic="true"></p>
+
+          <section class="completion" id="completion-summary" aria-labelledby="completion-title" hidden>
+            <div class="completion-copy">
+              <p class="eyebrow">PAINEL ENCERRADO</p>
+              <h2 id="completion-title">Você concluiu o desafio</h2>
+              <p id="completion-detail"></p>
+            </div>
+            <div class="completion-actions">
+              <button class="button-primary" id="share-result" type="button">Compartilhar resultado</button>
+              <button class="button-secondary" id="challenge-link" type="button">Desafiar alguém</button>
+              <button class="button-secondary" id="next-practice" type="button" hidden>Outro painel</button>
+            </div>
+          </section>
+        </section>
+
+        <aside class="side-panel" aria-label="Progresso e modos">
+          <section class="side-section">
+            <h2>Seu ritmo</h2>
+            <div class="stats-row">
+              <div><strong id="stat-streak">0</strong><span>dias seguidos</span></div>
+              <div><strong id="stat-wins">0</strong><span>painéis vencidos</span></div>
+              <div><strong id="stat-losses">0</strong><span>não resolvidos</span></div>
+            </div>
+          </section>
+          <section class="side-section hint-section">
+            <h2>Pista</h2>
+            <p id="hint-message">As relações aparecem aqui quando você usa uma dica.</p>
+          </section>
+          <section class="side-section archive-section">
+            <h2>Arquivo recente</h2>
+            <p>Revise painéis anteriores sem alterar sua sequência diária.</p>
+            <button class="text-button" id="open-archive" type="button">Ver painéis anteriores</button>
+          </section>
+          <p class="storage-note">Seu progresso fica salvo neste navegador.</p>
+        </aside>
+      </div>
+    </main>
+
+    <footer class="site-footer"><span>Sem cronômetro, no seu ritmo.</span><span>Conteúdo demonstrativo · 7 painéis</span></footer>
+  </div>
+
+  <dialog class="dialog" id="stats-dialog" aria-labelledby="stats-title">
+    <form method="dialog"><button class="dialog-close" aria-label="Fechar estatísticas">Fechar</button></form>
+    <p class="eyebrow">SEU PROGRESSO</p>
+    <h2 id="stats-title">Estatísticas</h2>
+    <div class="dialog-stats" id="dialog-stats"></div>
+    <p class="dialog-note">As estatísticas são armazenadas localmente neste navegador.</p>
+  </dialog>
+
+  <dialog class="dialog" id="archive-dialog" aria-labelledby="archive-title">
+    <form method="dialog"><button class="dialog-close" aria-label="Fechar arquivo">Fechar</button></form>
+    <p class="eyebrow">PRÁTICA</p>
+    <h2 id="archive-title">Painéis anteriores</h2>
+    <p class="dialog-note">Escolha um painel para jogar. A prática não altera sua sequência.</p>
+    <div class="archive-list" id="archive-list"></div>
+  </dialog>
+
+  <dialog class="dialog" id="share-dialog" aria-labelledby="share-title">
+    <form method="dialog"><button class="dialog-close" aria-label="Fechar compartilhamento">Fechar</button></form>
+    <p class="eyebrow">SEM SPOILERS</p>
+    <h2 id="share-title">Seu resultado</h2>
+    <label class="visually-hidden" for="share-text">Texto para compartilhar</label>
+    <textarea id="share-text" readonly rows="5"></textarea>
+    <button class="button-primary" id="copy-share-text" type="button">Copiar texto</button>
+  </dialog>
+  <noscript>Este jogo precisa de JavaScript ativado para funcionar.</noscript>
+</body>
+</html>

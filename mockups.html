@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f0e7">
+  <title>Palavras em comum | Estudos de interface</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #142c2b;
+      --muted: #526765;
+      --line: #cbd5cd;
+      --paper: #f5f1e8;
+      --tile: #fffdf7;
+      --accent: #12665d;
+      --accent-ink: #fff;
+      --focus: #e45836;
+      --good: #d6e9cc;
+      --bad: #f6d7ca;
+      --shadow: 0 12px 36px rgb(27 42 36 / 10%);
+      font-family: "Avenir Next", Avenir, "Trebuchet MS", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #e6e9e1; color: var(--ink); }
+    button { color: inherit; font: inherit; }
+    button:focus-visible, a:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+    .showcase { max-width: 1440px; margin: auto; padding: 22px clamp(16px, 4vw, 56px) 42px; }
+    .showcase-head { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin: 0 auto 18px; max-width: 1180px; }
+    .showcase-head p { margin: 0 0 5px; color: #48615d; font: 700 11px/1.2 "Avenir Next", sans-serif; letter-spacing: .12em; text-transform: uppercase; }
+    .showcase-head h1 { margin: 0; font: 500 clamp(24px, 3vw, 38px)/1.05 Georgia, serif; letter-spacing: 0; }
+    .switcher { display: flex; flex-wrap: wrap; gap: 7px; padding: 5px; background: #dce2d9; border: 1px solid #c8d1c8; border-radius: 10px; }
+    .switcher button { min-height: 42px; padding: 0 13px; border: 1px solid transparent; border-radius: 6px; background: transparent; cursor: pointer; font-size: 13px; font-weight: 700; }
+    .switcher button[aria-pressed="true"] { background: #fffdf7; border-color: #cbd5cd; box-shadow: 0 2px 5px rgb(20 44 43 / 8%); }
+    .frame { max-width: 1180px; min-height: 730px; margin: auto; overflow: hidden; border: 1px solid #c7cec5; border-radius: 12px; background: var(--paper); box-shadow: var(--shadow); transition: background-color .25s, color .25s; }
+    .game { min-height: 730px; padding: clamp(20px, 4vw, 48px); }
+    .game-top { display: flex; align-items: start; justify-content: space-between; gap: 20px; padding-bottom: 22px; border-bottom: 1px solid var(--line); }
+    .wordmark { display: flex; align-items: center; gap: 10px; }
+    .mark { display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid currentColor; border-radius: 50%; font: 700 16px/1 Georgia, serif; }
+    .brand { font: 700 15px/1.1 "Avenir Next", sans-serif; letter-spacing: .01em; }
+    .edition { display: block; margin-top: 5px; color: var(--muted); font: 600 10px/1.1 "Avenir Next", sans-serif; letter-spacing: .11em; text-transform: uppercase; }
+    .top-actions { display: flex; gap: 8px; }
+    .quiet-button { min-height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: 5px; background: transparent; cursor: pointer; font-size: 12px; font-weight: 700; }
+    .quiet-button:hover { background: color-mix(in srgb, var(--accent) 8%, var(--tile)); }
+    .intro { display: flex; align-items: end; justify-content: space-between; gap: 16px; padding: 27px 0 23px; }
+    .intro h2 { margin: 0; font: 500 clamp(28px, 4vw, 44px)/1 Georgia, serif; letter-spacing: 0; }
+    .intro .date { margin: 0 0 8px; color: var(--muted); font: 700 11px/1.2 "Avenir Next", sans-serif; letter-spacing: .12em; text-transform: uppercase; }
+    .day-number { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; font-weight: 700; }
+    .day-number b { color: var(--ink); font: 500 22px/1 Georgia, serif; }
+    .main-grid { display: grid; grid-template-columns: minmax(0, 1fr) 245px; grid-template-areas: "board rail"; align-items: start; gap: 25px; }
+    .board-wrap { min-width: 0; }
+    .board-meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 11px; color: var(--muted); font-size: 12px; font-weight: 700; }
+    .mistakes { display: flex; align-items: center; gap: 7px; white-space: nowrap; }
+    .mistake-shapes { display: flex; gap: 4px; }
+    .mistake-shapes i { display: block; width: 9px; height: 9px; border: 1.5px solid var(--accent); border-radius: 2px; }
+    .mistake-shapes i.used { background: var(--focus); border-color: var(--focus); transform: rotate(45deg); }
+    .board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; }
+    .tile { display: grid; min-height: 68px; place-items: center; padding: 8px 5px; border: 1px solid var(--line); border-radius: 5px; background: var(--tile); cursor: pointer; font-size: clamp(12px, 1.35vw, 15px); font-weight: 750; line-height: 1.2; text-align: center; overflow-wrap: anywhere; transition: background-color .16s, border-color .16s, transform .16s; }
+    .tile:hover:not(:disabled) { border-color: var(--accent); transform: translateY(-2px); }
+    .tile[aria-pressed="true"] { border: 2px solid var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--tile)); box-shadow: inset 0 -4px 0 var(--accent); }
+    .tile[aria-pressed="true"]::before { content: "✓"; position: absolute; transform: translate(25px, -20px); display: grid; width: 18px; height: 18px; place-items: center; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-size: 11px; }
+    .tile:disabled { cursor: default; opacity: .45; }
+    .selection-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 58px; padding: 12px 0; color: var(--muted); font-size: 12px; font-weight: 700; }
+    .selection-row strong { color: var(--ink); font-size: 14px; }
+    .action-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .primary-button, .secondary-button { min-height: 45px; padding: 0 16px; border-radius: 5px; cursor: pointer; font-size: 13px; font-weight: 800; }
+    .primary-button { border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); }
+    .primary-button:disabled { cursor: not-allowed; opacity: .48; }
+    .secondary-button { border: 1px solid var(--line); background: transparent; }
+    .primary-button:not(:disabled):hover { filter: brightness(1.1); }
+    .live { min-height: 25px; margin: 10px 0 0; color: var(--muted); font-size: 13px; line-height: 1.4; }
+    .live[data-kind="error"] { color: #a43824; font-weight: 700; }
+    .live[data-kind="success"] { color: var(--accent); font-weight: 700; }
+    .rail { display: grid; gap: 14px; }
+    .rail-section { padding: 16px; border: 1px solid var(--line); border-radius: 6px; background: color-mix(in srgb, var(--tile) 72%, transparent); }
+    .rail-section h3 { margin: 0 0 13px; color: var(--muted); font: 700 10px/1.2 "Avenir Next", sans-serif; letter-spacing: .12em; text-transform: uppercase; }
+    .stat-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .stat strong { display: block; font: 500 26px/1 Georgia, serif; }
+    .stat span { display: block; margin-top: 4px; color: var(--muted); font-size: 11px; }
+    .hint { width: 100%; text-align: left; }
+    .hint span { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; font-weight: 500; }
+    .solved { display: grid; gap: 7px; margin-bottom: 10px; }
+    .solved-group { padding: 9px 11px; border-left: 4px solid var(--accent); background: var(--good); font-size: 12px; font-weight: 800; }
+    .solved-group small { display: block; margin-top: 3px; font-weight: 500; }
+    .footer-note { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 23px; padding-top: 15px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; }
+    .high-contrast { --paper: #fff; --tile: #fff; --ink: #000; --muted: #222; --line: #333; --accent: #004a44; --accent-ink: #fff; --good: #d7ffd3; --bad: #ffe1d7; }
+    .frame[data-theme="folio"] { --paper: #f6f1e5; --tile: #fffdf7; --ink: #193a37; --muted: #536b65; --line: #cad6cb; --accent: #12665d; --accent-ink: #fff; --focus: #cf4c31; }
+    .frame[data-theme="folio"] .game { background-image: radial-gradient(#b8a87e22 .7px, transparent .7px); background-size: 8px 8px; }
+    .frame[data-theme="folio"] .intro h2 { font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif; }
+    .frame[data-theme="signal"] { --paper: #121a1d; --tile: #1d292c; --ink: #f3f4de; --muted: #b7c7bd; --line: #455357; --accent: #d8fa4e; --accent-ink: #182018; --focus: #ff8868; --good: #32462d; --bad: #552f27; color-scheme: dark; }
+    .frame[data-theme="signal"] .game { background-image: linear-gradient(90deg, transparent 49.8%, #ffffff07 50%, transparent 50.2%); }
+    .frame[data-theme="signal"] .intro h2 { font-family: "Trebuchet MS", sans-serif; font-weight: 800; }
+    .frame[data-theme="signal"] .mark { border-radius: 8px; color: var(--accent); transform: rotate(-6deg); }
+    .frame[data-theme="signal"] .mistake-shapes i.used { background: var(--focus); border-color: var(--focus); }
+    .frame[data-theme="signal"] .live[data-kind="error"] { color: #ffab93; }
+    .frame[data-theme="poster"] { --paper: #ff5c47; --tile: #fff5db; --ink: #211b36; --muted: #3a3156; --line: #211b36; --accent: #3157f5; --accent-ink: #fff; --focus: #211b36; --good: #c7f167; --bad: #ffd1c5; }
+    .frame[data-theme="poster"] .game { background-image: radial-gradient(ellipse at 91% 10%, #ffc857 0 7%, transparent 7.2%), linear-gradient(135deg, transparent 79%, #e5458a 79% 83%, transparent 83%); }
+    .frame[data-theme="poster"] .game-top { border-bottom: 3px solid var(--ink); }
+    .frame[data-theme="poster"] .intro h2 { font: 900 clamp(31px, 4.5vw, 54px)/.9 "Trebuchet MS", sans-serif; }
+    .frame[data-theme="poster"] .mark { border: 0; border-radius: 4px; background: var(--ink); color: #fff5db; transform: rotate(5deg); }
+    .frame[data-theme="poster"] .tile { border-width: 2px; box-shadow: 3px 3px 0 var(--ink); }
+    .frame[data-theme="poster"] .tile[aria-pressed="true"] { background: #c7f167; box-shadow: 3px 3px 0 var(--ink), inset 0 -4px 0 var(--accent); }
+    .frame[data-theme="poster"] .rail-section { border-width: 2px; background: #fff5db; box-shadow: 3px 3px 0 var(--ink); }
+    .frame[data-theme="poster"] .quiet-button, .frame[data-theme="poster"] .secondary-button { border-width: 2px; background: #fff5db; }
+    .frame[data-theme="poster"] .primary-button { border-width: 2px; box-shadow: 3px 3px 0 var(--ink); }
+    .frame[data-theme="poster"] .footer-note { border-top: 3px solid var(--ink); }
+    .frame[data-theme="poster"] .live[data-kind="error"] { color: #531b14; }
+    @media (max-width: 780px) {
+      .showcase-head { align-items: start; flex-direction: column; }
+      .switcher { width: 100%; }
+      .switcher button { flex: 1 1 30%; padding: 0 7px; }
+      .frame { min-height: 0; }
+      .game { min-height: 0; padding: 20px 16px 24px; }
+      .main-grid { grid-template-columns: 1fr; gap: 14px; }
+      .rail { grid-template-columns: 1fr 1fr; }
+      .board { gap: 7px; }
+      .tile { min-height: 62px; padding: 7px 3px; font-size: 12px; }
+      .tile[aria-pressed="true"]::before { transform: translate(22px, -19px); }
+      .footer-note { align-items: start; flex-direction: column; }
+    }
+    @media (max-width: 420px) {
+      .top-actions .quiet-button { padding: 0 8px; font-size: 11px; }
+      .intro { align-items: start; flex-direction: column; }
+      .rail { grid-template-columns: 1fr; }
+      .action-row > button { flex: 1; }
+      .tile { min-height: 58px; font-size: 11px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+    }
+    .tile { position: relative; }
+    .frame[data-theme="signal"] .main-grid { grid-template-columns: 1fr; }
+    .frame[data-theme="signal"] .rail { order: -1; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .frame[data-theme="poster"] .main-grid { grid-template-columns: 190px minmax(0, 1fr); }
+    .frame[data-theme="poster"] .rail { order: -1; }
+    @media (max-width: 780px) {
+      .main-grid { grid-template-columns: 1fr; grid-template-areas: "board" "rail"; }
+      .frame[data-theme="signal"] .rail, .frame[data-theme="poster"] .rail { order: 0; grid-template-columns: 1fr 1fr; }
+      .frame[data-theme="signal"] .main-grid, .frame[data-theme="poster"] .main-grid { grid-template-columns: 1fr; grid-template-areas: "board" "rail"; }
+    }
+  </style>
+</head>
+<body>
+  <main class="showcase">
+    <header class="showcase-head">
+      <div>
+        <p>Estudos de interface · jogo de associação</p>
+        <h1>Três caminhos para o mesmo desafio</h1>
+      </div>
+      <nav class="switcher" aria-label="Escolher proposta visual" role="group">
+        <button type="button" data-choice="folio" aria-pressed="true">01 · Caderno</button>
+        <button type="button" data-choice="signal" aria-pressed="false">02 · Sinal</button>
+        <button type="button" data-choice="poster" aria-pressed="false">03 · Cartaz</button>
+      </nav>
+    </header>
+
+    <section class="frame" id="frame" data-theme="folio" aria-label="Protótipo interativo do jogo">
+      <div class="game" id="game">
+        <header class="game-top">
+          <div class="wordmark"><span class="mark" aria-hidden="true">∴</span><div><div class="brand">PALAVRAS EM COMUM</div><span class="edition">Um painel por dia</span></div></div>
+          <div class="top-actions">
+            <button class="quiet-button" id="contrast" type="button" aria-pressed="false">◐ Contraste</button>
+            <button class="quiet-button" type="button" aria-label="Abrir estatísticas">Estatísticas</button>
+          </div>
+        </header>
+
+        <div class="intro">
+          <div><p class="date">Quinta-feira · 15 de outubro</p><h2>O que têm em comum?</h2></div>
+          <div class="day-number"><span>Painel</span><b>284</b></div>
+        </div>
+
+        <div class="main-grid">
+          <section class="board-wrap" aria-label="Tabuleiro">
+            <div class="board-meta"><span id="selection-label">Seleção <strong id="selected-count">0 / 4</strong></span><span class="mistakes"><span>Erros</span><strong id="error-count">0 / 5</strong><span class="mistake-shapes" id="mistake-shapes" aria-hidden="true"></span></span></div>
+            <div class="solved" id="solved" aria-label="Grupos resolvidos"></div>
+            <div class="board" id="board" role="group" aria-label="16 termos do painel"></div>
+            <div class="selection-row"><span id="selection-status" aria-live="polite">0 termos marcados</span><button type="button" class="secondary-button" id="clear">Limpar</button></div>
+            <div class="action-row">
+              <button type="button" class="primary-button" id="submit" disabled>Enviar grupo</button>
+              <button type="button" class="secondary-button" id="hint">Ver dica</button>
+              <button type="button" class="secondary-button" id="share">Compartilhar</button>
+            </div>
+            <p class="live" id="live" role="status" aria-live="polite" aria-atomic="true">&nbsp;</p>
+          </section>
+
+          <aside class="rail" aria-label="Resumo da partida">
+            <section class="rail-section"><h3>Seu ritmo</h3><div class="stat-pair"><div class="stat"><strong>4</strong><span>dias seguidos</span></div><div class="stat"><strong>12</strong><span>painéis vencidos</span></div></div></section>
+            <section class="rail-section"><h3>Pista disponível</h3><button type="button" class="quiet-button hint" id="hint-card">Uma pista <span>Revelar uma relação</span></button><p id="hint-text" class="live" aria-live="polite"></p></section>
+            <section class="rail-section"><h3>Arquivo</h3><button type="button" class="quiet-button hint">Praticar painel anterior <span>Sem alterar sua sequência</span></button></section>
+          </aside>
+        </div>
+        <footer class="footer-note"><span>Desafio diário · sem cronômetro</span><span>Seu progresso fica salvo neste navegador</span></footer>
+      </div>
+    </section>
+  </main>
+  <script>
+    const groups = [
+      { name: "Partes de um livro", terms: ["prólogo", "capítulo", "índice", "epílogo"], mark: "▰" },
+      { name: "Flores", terms: ["tulipa", "lírio", "girassol", "margarida"], mark: "✿" },
+      { name: "Temperos", terms: ["canela", "gengibre", "açafrão", "cominho"], mark: "◆" },
+      { name: "Instrumentos musicais", terms: ["flauta", "tambor", "violão", "piano"], mark: "♫" }
+    ];
+    const terms = ["girassol", "prólogo", "gengibre", "flauta", "açafrão", "capítulo", "tulipa", "tambor", "índice", "piano", "margarida", "cominho", "violão", "epílogo", "canela", "lírio"];
+    const board = document.querySelector("#board");
+    const live = document.querySelector("#live");
+    const selected = new Set();
+    const solved = new Set();
+    let errors = 0;
+    let hintIndex = 0;
+    let consecutiveErrors = 0;
+
+    function renderBoard() {
+      board.replaceChildren();
+      terms.filter(term => ![...solved].some(groupIndex => groups[groupIndex].terms.includes(term))).forEach(term => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "tile";
+        button.textContent = term;
+        button.setAttribute("aria-label", term);
+        button.setAttribute("aria-pressed", String(selected.has(term)));
+        button.disabled = errors >= 5 || solved.size === groups.length;
+        button.addEventListener("click", () => toggleTerm(term));
+        board.append(button);
+      });
+      document.querySelector("#selected-count").textContent = `${selected.size} / 4`;
+      document.querySelector("#selection-status").textContent = `${selected.size} ${selected.size === 1 ? "termo marcado" : "termos marcados"}`;
+      document.querySelector("#submit").disabled = selected.size !== 4 || errors >= 5 || solved.size === groups.length;
+    }
+    function toggleTerm(term) {
+      if (selected.has(term)) selected.delete(term);
+      else if (selected.size < 4) selected.add(term);
+      else { announce("Já há quatro termos marcados. Remova um antes de escolher outro.", "error"); return; }
+      announce("", "");
+      renderBoard();
+    }
+    function announce(message, kind) {
+      live.textContent = message || "\u00a0";
+      live.dataset.kind = kind || "";
+    }
+    function renderErrors() {
+      document.querySelector("#error-count").textContent = `${errors} / 5`;
+      const shapes = document.querySelector("#mistake-shapes");
+      shapes.replaceChildren(...Array.from({ length: 5 }, (_, i) => {
+        const shape = document.createElement("i");
+        if (i < errors) shape.className = "used";
+        return shape;
+      }));
+    }
+    function renderSolved(groupIndex) {
+      const group = groups[groupIndex];
+      const row = document.createElement("div");
+      row.className = "solved-group";
+      row.innerHTML = `<span aria-hidden="true">${group.mark}</span> ${group.name}<small>${group.terms.join(" · ")}</small>`;
+      document.querySelector("#solved").append(row);
+    }
+    function submitGroup() {
+      const match = groups.findIndex(group => group.terms.every(term => selected.has(term)));
+      if (match >= 0) {
+        solved.add(match);
+        selected.clear();
+        consecutiveErrors = 0;
+        renderSolved(match);
+        announce(`Grupo encontrado: ${groups[match].name}.`, "success");
+        if (solved.size === groups.length) announce("Painel concluído. Você encontrou todas as relações.", "success");
+      } else {
+        errors += 1;
+        consecutiveErrors += 1;
+        const near = groups.some(group => group.terms.filter(term => selected.has(term)).length === 3);
+        selected.clear();
+        renderErrors();
+        announce(near ? `Quase: três termos pertencem ao mesmo grupo. Restam ${5 - errors} erros.` : `Essa combinação não forma um grupo. Restam ${5 - errors} erros.`, "error");
+        if (errors >= 5) announce("Limite de erros atingido. As relações do painel foram reveladas.", "error");
+        if (errors >= 5) groups.forEach((group, index) => { if (!solved.has(index)) renderSolved(index); });
+      }
+      renderBoard();
+    }
+    function revealHint() {
+      const target = groups.find(group => group.terms.some(term => ![...solved].some(i => groups[i].terms.includes(term)))) || groups[0];
+      const text = `Uma categoria deste painel: ${target.name}.`;
+      document.querySelector("#hint-text").textContent = text;
+      announce(text, "success");
+      hintIndex += 1;
+    }
+    document.querySelector("#submit").addEventListener("click", submitGroup);
+    document.querySelector("#clear").addEventListener("click", () => { selected.clear(); renderBoard(); announce("Seleção limpa.", ""); });
+    document.querySelector("#hint").addEventListener("click", revealHint);
+    document.querySelector("#hint-card").addEventListener("click", revealHint);
+    document.querySelector("#contrast").addEventListener("click", event => {
+      const active = document.querySelector("#game").classList.toggle("high-contrast");
+      event.currentTarget.setAttribute("aria-pressed", String(active));
+      event.currentTarget.textContent = active ? "◑ Contraste" : "◐ Contraste";
+    });
+    document.querySelector("#share").addEventListener("click", async () => {
+      const summary = `Painel 284 · ${solved.size}/4 grupos · ${errors}/5 erros\n◆ □ ◆ △`;
+      try {
+        await navigator.clipboard.writeText(summary);
+        announce("Resultado copiado, sem revelar as respostas.", "success");
+      } catch {
+        announce(summary, "success");
+      }
+    });
+    document.querySelectorAll("[data-choice]").forEach(button => button.addEventListener("click", () => {
+      document.querySelector("#frame").dataset.theme = button.dataset.choice;
+      document.querySelectorAll("[data-choice]").forEach(tab => tab.setAttribute("aria-pressed", String(tab === button)));
+    }));
+    renderBoard();
+    renderErrors();
+  </script>
+</body>
+</html>
